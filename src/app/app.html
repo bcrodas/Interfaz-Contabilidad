@@ -1,0 +1,538 @@
+@if (authStatus === 'loading') {
+  <main class="auth-screen"><section class="auth-card"><span class="brand-mark">n</span><h1>Conectando contabilidad</h1><p>Verificando el servidor y la base de datos.</p></section></main>
+} @else if (authStatus === 'login') {
+  <main class="auth-screen">
+    <form class="auth-card" (ngSubmit)="login()">
+      <span class="brand-mark">n</span>
+      <span class="eyebrow">SISTEMA CONTABLE</span>
+      <h1>Iniciar sesión</h1>
+      <p>Ingresa con tu usuario de la aplicación.</p>
+      <label class="field"><span>Usuario</span><input name="username" autocomplete="username" required [(ngModel)]="loginUsername" /></label>
+      <label class="field"><span>Contraseña</span><input name="password" type="password" autocomplete="current-password" required [(ngModel)]="loginPassword" /></label>
+      @if (loginError) { <p class="form-error" role="alert">{{ loginError }}</p> }
+      <button class="button button-primary auth-submit" type="submit">Ingresar</button>
+    </form>
+  </main>
+} @else if (authStatus === 'error') {
+  <main class="auth-screen"><section class="auth-card"><span class="brand-mark">!</span><h1>Servicio no disponible</h1><p role="alert">{{ backendError }}</p><button class="button button-secondary" (click)="ngOnInit()">Reintentar</button></section></main>
+} @else {
+<div class="app-shell">
+  @if (mobileMenuOpen) {
+    <button class="mobile-backdrop" aria-label="Cerrar menú" (click)="mobileMenuOpen = false"></button>
+  }
+
+  <aside class="sidebar" [class.sidebar-open]="mobileMenuOpen">
+    <a class="brand" href="#" (click)="$event.preventDefault(); selectSection(sections.DASHBOARD)">
+      <span class="brand-mark">n</span>
+      <span class="brand-name">nómina<span class="brand-dot">.</span></span>
+    </a>
+
+    <div class="company-switcher">
+      <span class="company-avatar">V</span>
+      <span class="company-info">
+        <strong>Grupo Valle</strong>
+        <small>Plan empresarial</small>
+      </span>
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+    </div>
+
+    <p class="nav-caption">MENÚ PRINCIPAL</p>
+    <nav class="main-nav" aria-label="Navegación principal">
+      @for (item of navItems; track item.id) {
+        @if (item.id !== sections.USERS || isAdministrator) {
+        <button
+          class="nav-link"
+          [class.nav-link-active]="activeSection === item.id"
+          [attr.aria-current]="activeSection === item.id ? 'page' : null"
+          (click)="selectSection(item.id)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            @switch (item.icon) {
+              @case ('grid') {
+                <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+                <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+                <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+                <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+              }
+              @case ('receipt') {
+                <path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8v-17Z" />
+                <path d="M9 8h6M9 12h6M9 16h3" />
+              }
+              @case ('layers') {
+                <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+                <path d="m3 12 9 5 9-5M3 16l9 5 9-5" />
+              }
+              @case ('chart') {
+                <path d="M4 20V10m8 10V4m8 16v-7" />
+                <path d="M2.5 20.5h19" />
+              }
+              @case ('users') {
+                <circle cx="9" cy="8" r="3" />
+                <path d="M3.5 20v-1.5a5.5 5.5 0 0 1 11 0V20M16 5.5a3 3 0 0 1 0 5.8m2 3a5 5 0 0 1 2.5 4.2V20" />
+              }
+            }
+          </svg>
+          <span>{{ item.label }}</span>
+          @if (item.id === sections.VOUCHERS) {
+            <span class="nav-count">{{ vouchers.length }}</span>
+          }
+        </button>
+        }
+      }
+    </nav>
+
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-help">
+      <span class="help-icon">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.8 9a2.3 2.3 0 1 1 4.1 1.4c-.9 1-1.9 1.3-1.9 2.8M12 16.8h.01" />
+        </svg>
+      </span>
+      <strong>¿Necesitas ayuda?</strong>
+      <span>Visita nuestro centro de soporte</span>
+      <button (click)="showNotice('Pronto tendrás acceso al centro de soporte.')">Ir al centro de ayuda <span>↗</span></button>
+    </div>
+    <button class="profile-button" (click)="logout()">
+      <span class="profile-avatar">{{ currentUser.slice(0, 2).toUpperCase() }}</span>
+      <span class="profile-info"><strong>{{ currentUser }}</strong><small>Cerrar sesión</small></span>
+      <span class="profile-more">↪</span>
+    </button>
+  </aside>
+
+  <div class="main-column">
+    <header class="topbar">
+      <button class="icon-button mobile-menu-button" aria-label="Abrir menú" (click)="mobileMenuOpen = true">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+      </button>
+      <div class="breadcrumbs"><span>Finanzas</span><span class="crumb-divider">/</span><strong>{{ currentTitle }}</strong></div>
+      <div class="topbar-actions">
+        <label class="global-search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 4.5 4.5" /></svg>
+          <input type="search" aria-label="Buscar" placeholder="Buscar en el módulo..." [(ngModel)]="query" />
+          <kbd>⌘ K</kbd>
+        </label>
+        <button class="icon-button notification-button" aria-label="Notificaciones" (click)="showNotice('No tienes notificaciones pendientes.')">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
+          </svg>
+          <span></span>
+        </button>
+        <span class="topbar-avatar">{{ currentUser.slice(0, 2).toUpperCase() }}</span>
+      </div>
+    </header>
+
+    <main class="page-content">
+      @if (activeSection === sections.DASHBOARD) {
+        <section class="page-heading dashboard-heading">
+          <div>
+            <span class="eyebrow">{{ todayLabel }}</span>
+            <h1>Tu contabilidad, <span>en orden.</span></h1>
+            <p>Un vistazo claro a la salud financiera de tu negocio.</p>
+          </div>
+          <button class="button button-primary" (click)="openNewVoucher()">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            Nuevo comprobante
+          </button>
+        </section>
+
+        <section class="summary-grid" aria-label="Resumen financiero">
+          <article class="summary-card">
+            <div class="summary-top"><span class="summary-label">Activos totales</span><span class="metric-icon metric-lilac">↗</span></div>
+            <strong class="summary-value">{{ formatCurrency(assetsTotal) }}</strong>
+            <div class="summary-foot"><span class="trend neutral">Según movimientos</span><span>registrados</span></div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-top"><span class="summary-label">Ingresos del mes</span><span class="metric-icon metric-green">↗</span></div>
+            <strong class="summary-value">{{ formatCurrency(incomeTotal) }}</strong>
+            <div class="summary-foot"><span class="trend neutral">Según movimientos</span><span>registrados</span></div>
+          </article>
+          <article class="summary-card">
+            <div class="summary-top"><span class="summary-label">Gastos del mes</span><span class="metric-icon metric-peach">↘</span></div>
+            <strong class="summary-value">{{ formatCurrency(expensesTotal) }}</strong>
+            <div class="summary-foot"><span class="trend neutral">Según movimientos</span><span>registrados</span></div>
+          </article>
+          <article class="summary-card profit-card">
+            <div class="summary-top"><span class="summary-label">Utilidad neta</span><span class="metric-icon metric-blue">⌁</span></div>
+            <strong class="summary-value">{{ formatCurrency(netIncome) }}</strong>
+            <div class="summary-foot"><span class="trend positive">Margen {{ incomeTotal ? (netIncome / incomeTotal * 100 | number:'1.0-1') : '0' }}%</span><span>del período</span></div>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <article class="panel activity-panel">
+            <div class="panel-heading">
+              <div><h2>Actividad financiera</h2><p>Ingresos y gastos registrados durante los últimos 6 meses</p></div>
+              <span class="result-count">Últimos 6 meses</span>
+            </div>
+            <div class="chart-summary"><strong>{{ formatCurrency(netIncome) }}</strong><span>Utilidad del período seleccionado</span></div>
+            <div class="bar-chart" aria-label="Gráfico de ingresos y gastos">
+              <div class="chart-y-labels"><span>{{ formatCurrency(monthlyChartMax) }}</span><span>{{ formatCurrency(monthlyChartMax * 2 / 3) }}</span><span>{{ formatCurrency(monthlyChartMax / 3) }}</span><span>$0</span></div>
+              <div class="chart-plot">
+                <div class="chart-grid-lines"><i></i><i></i><i></i><i></i></div>
+                <div class="chart-columns">
+                  @for (month of monthlyActivity; track month.label) {
+                    <div class="chart-column">
+                      <div class="bar-pair">
+                        <span class="chart-bar bar-income" [style.height]="getBarHeight(month.income)"></span>
+                        <span class="chart-bar bar-expense" [style.height]="getBarHeight(month.expenses)"></span>
+                      </div>
+                      <span class="chart-month">{{ month.label }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="chart-legend"><span><i class="legend-dot income-dot"></i>Ingresos</span><span><i class="legend-dot expense-dot"></i>Gastos</span></div>
+          </article>
+
+          <article class="panel balance-panel">
+            <div class="panel-heading">
+              <div><h2>Balance general</h2><p>Al {{ todayLabel.toLocaleLowerCase('es') }}</p></div>
+              <button class="more-button" aria-label="Más opciones" (click)="selectSection(sections.REPORTS)">···</button>
+            </div>
+            <div class="balance-visual">
+              <div class="balance-donut"><div><strong>{{ formatCurrency(assetsTotal) }}</strong><span>Activos</span></div></div>
+              <div class="balance-legend">
+                <span><i class="legend-dot assets-dot"></i>Activos <b>{{ formatCurrency(assetsTotal) }}</b></span>
+                <span><i class="legend-dot liabilities-dot"></i>Pasivos <b>{{ formatCurrency(liabilitiesTotal) }}</b></span>
+                <span><i class="legend-dot equity-dot"></i>Patrimonio <b>{{ formatCurrency(equityTotal) }}</b></span>
+              </div>
+            </div>
+            <div class="balance-status" [class.status-warning]="!isBalanceSheetBalanced">
+              <span class="status-check">{{ isBalanceSheetBalanced ? '✓' : '!' }}</span>
+              <span><strong>{{ isBalanceSheetBalanced ? 'Balance cuadrado' : 'Revisa el balance' }}</strong><small>{{ isBalanceSheetBalanced ? 'Activos = pasivos + patrimonio' : balanceDifferenceLabel }}</small></span>
+              <span class="status-arrow">↗</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel recent-panel">
+          <div class="panel-heading">
+            <div><h2>Comprobantes recientes</h2><p>Los últimos movimientos registrados en tu contabilidad</p></div>
+            <button class="text-button" (click)="selectSection(sections.VOUCHERS)">Ver todos <span>→</span></button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>NÚMERO</th><th>DESCRIPCIÓN</th><th>FECHA</th><th>CUENTAS</th><th class="align-right">VALOR</th><th></th></tr></thead>
+              <tbody>
+                @for (voucher of filteredVouchers.slice(0, 4); track voucher.id) {
+                  <tr>
+                    <td><span class="voucher-number">{{ voucher.number }}</span></td>
+                    <td><span class="primary-cell">{{ voucher.observations }}</span></td>
+                    <td>{{ formatDate(voucher.date) }}</td>
+                    <td><span class="account-pills">{{ voucher.details.length }} movimientos</span></td>
+                    <td class="align-right amount-cell">{{ formatCurrency(voucher.details.reduce((total, line) => total + line.debit, 0)) }}</td>
+                    <td><button class="row-more" aria-label="Editar comprobante" (click)="openEditVoucher(voucher)">···</button></td>
+                  </tr>
+                } @empty {
+                  <tr><td class="empty-state" colspan="6">No hay comprobantes para mostrar.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (activeSection === sections.VOUCHERS) {
+        <section class="page-heading">
+          <div><span class="eyebrow">REGISTRO CONTABLE</span><h1>Comprobantes</h1><p>Registra y consulta los movimientos de tu negocio.</p></div>
+          <button class="button button-primary" (click)="openNewVoucher()">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            Nuevo comprobante
+          </button>
+        </section>
+        <section class="panel data-panel">
+          <div class="filter-row">
+            <label class="date-filter"><span>Desde</span><input type="date" [(ngModel)]="dateFrom" aria-label="Fecha desde" /></label>
+            <label class="date-filter"><span>Hasta</span><input type="date" [(ngModel)]="dateTo" aria-label="Fecha hasta" /></label>
+            <span class="filter-spacer"></span>
+            <span class="result-count">{{ filteredVouchers.length }} comprobantes</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>NÚMERO</th><th>FECHA</th><th>DESCRIPCIÓN</th><th>DETALLE</th><th class="align-right">DEBE</th><th class="align-right">HABER</th><th></th></tr></thead>
+              <tbody>
+                @for (voucher of filteredVouchers; track voucher.id) {
+                  <tr>
+                    <td><span class="voucher-number">{{ voucher.number }}</span></td>
+                    <td>{{ formatDate(voucher.date) }}</td>
+                    <td><span class="primary-cell">{{ voucher.observations }}</span></td>
+                    <td><span class="account-pills">{{ voucher.details.length }} líneas</span></td>
+                    <td class="align-right amount-cell">{{ formatCurrency(voucher.details.reduce((total, line) => total + line.debit, 0)) }}</td>
+                    <td class="align-right amount-cell">{{ formatCurrency(voucher.details.reduce((total, line) => total + line.credit, 0)) }}</td>
+                    <td><div class="row-actions"><button class="row-more" aria-label="Editar comprobante" (click)="openEditVoucher(voucher)">✎</button><button class="row-more danger-action" aria-label="Eliminar comprobante" (click)="deleteVoucher(voucher)">×</button></div></td>
+                  </tr>
+                } @empty {
+                  <tr><td class="empty-state" colspan="7">No hay comprobantes en este período. Ajusta las fechas o registra uno nuevo.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (activeSection === sections.ACCOUNTS) {
+        <section class="page-heading">
+          <div><span class="eyebrow">ESTRUCTURA CONTABLE</span><h1>Plan de cuentas</h1><p>Organiza las cuentas y sus tipos para mantener el registro claro.</p></div>
+          @if (accountView === accountViews.ACCOUNTS) {
+            <button class="button button-primary" (click)="openNewAccount()"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Nueva cuenta</button>
+          } @else {
+            <button class="button button-primary" (click)="openNewAccountType()"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>Nuevo tipo</button>
+          }
+        </section>
+        <section class="panel data-panel">
+          <div class="tab-row" role="tablist" aria-label="Cuentas y tipos">
+            <button role="tab" [attr.aria-selected]="accountView === accountViews.ACCOUNTS" [class.tab-active]="accountView === accountViews.ACCOUNTS" (click)="accountView = accountViews.ACCOUNTS">Cuentas <span>{{ accounts.length }}</span></button>
+            <button role="tab" [attr.aria-selected]="accountView === accountViews.TYPES" [class.tab-active]="accountView === accountViews.TYPES" (click)="accountView = accountViews.TYPES">Tipos de cuenta <span>{{ accountTypes.length }}</span></button>
+          </div>
+          @if (accountView === accountViews.ACCOUNTS) {
+            <div class="filter-row">
+              <span class="result-count">{{ filteredAccounts.length }} cuentas registradas</span>
+              <span class="filter-spacer"></span>
+              <label class="select-filter"><span>Todos los tipos</span><select aria-label="Filtrar por tipo" [(ngModel)]="selectedTypeId"><option [ngValue]="''">Todos los tipos</option>@for (type of accountTypes; track type.id) {<option [ngValue]="type.id">{{ type.name }}</option>}</select></label>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>CÓDIGO</th><th>NOMBRE DE LA CUENTA</th><th>TIPO</th><th>NATURALEZA</th><th class="align-right">SALDO</th><th></th></tr></thead>
+                <tbody>
+                  @for (account of filteredAccounts; track account.id) {
+                    <tr>
+                      <td><span class="voucher-number">{{ account.code }}</span></td>
+                      <td><span class="primary-cell">{{ account.name }}</span></td>
+                      <td><span class="type-chip">{{ getAccountTypeName(account.typeId) }}</span></td>
+                      <td>{{ getAccountTypeNature(account.typeId) }}</td>
+                      <td class="align-right amount-cell">{{ formatCurrency(account.balance) }}</td>
+                      <td><div class="row-actions"><button class="row-more" aria-label="Editar cuenta" (click)="openEditAccount(account)">✎</button><button class="row-more danger-action" aria-label="Eliminar cuenta" (click)="deleteAccount(account)">×</button></div></td>
+                    </tr>
+                  } @empty {
+                    <tr><td class="empty-state" colspan="6">No hay cuentas que coincidan con tu búsqueda.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>CLASIFICACIÓN</th><th>TIPO DE CUENTA</th><th>NATURALEZA</th><th>CUENTAS ASOCIADAS</th><th></th></tr></thead>
+                <tbody>
+                  @for (type of filteredAccountTypes; track type.id) {
+                    <tr>
+                      <td><span class="type-chip">{{ getAccountTypeClassification(type.id) }}</span></td>
+                      <td><span class="primary-cell">{{ type.name }}</span></td>
+                      <td><span class="nature-chip" [class.nature-credit]="type.nature === accountNatures.CREDIT">{{ getAccountTypeNature(type.id) }}</span></td>
+                      <td>{{ accountCountByType(type.id) }} cuentas</td>
+                      <td><div class="row-actions"><button class="row-more" aria-label="Editar tipo de cuenta" (click)="openEditAccountType(type)">✎</button><button class="row-more danger-action" aria-label="Eliminar tipo de cuenta" (click)="deleteAccountType(type)">×</button></div></td>
+                    </tr>
+                  } @empty {
+                    <tr><td class="empty-state" colspan="5">No hay tipos de cuenta registrados.</td></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </section>
+      }
+
+      @if (activeSection === sections.USERS && isAdministrator) {
+        <section class="page-heading">
+          <div><span class="eyebrow">ACCESO AL SISTEMA</span><h1>Usuarios</h1><p>Administra las cuentas de acceso de la aplicación.</p></div>
+          <button class="button button-primary" (click)="openNewUser()">Nuevo usuario</button>
+        </section>
+        @if (userDraft) {
+          <section class="panel data-panel user-editor">
+            <div class="panel-heading"><div><h2>{{ userDraft.id === null ? 'Crear usuario' : 'Editar usuario' }}</h2><p>Las contraseñas se guardan cifradas y nunca se muestran.</p></div></div>
+            <div class="form-grid">
+              <label class="field"><span>Nombre de usuario</span><input [(ngModel)]="userDraft.username" maxlength="100" autocomplete="off" /></label>
+              <label class="field"><span>{{ userDraft.id === null ? 'Contraseña (mínimo 12 caracteres)' : 'Nueva contraseña (opcional)' }}</span><input type="password" [(ngModel)]="userDraft.password" autocomplete="new-password" /></label>
+              <label class="field"><span>Rol</span><select [(ngModel)]="userDraft.role"><option value="USUARIO">Usuario</option><option value="ADMINISTRADOR">Administrador</option></select></label>
+              <label class="field checkbox-field"><input type="checkbox" [(ngModel)]="userDraft.active" /><span>Cuenta activa</span></label>
+            </div>
+            @if (formError) { <p class="form-error" role="alert">{{ formError }}</p> }
+            <div class="modal-footer"><button class="button button-secondary" (click)="userDraft = null">Cancelar</button><button class="button button-primary" [disabled]="isSaving" (click)="saveUser()">Guardar usuario</button></div>
+          </section>
+        }
+        <section class="panel data-panel">
+          <div class="filter-row"><span class="result-count">{{ filteredUsers.length }} usuarios</span><span class="filter-spacer"></span><label class="global-search"><input type="search" aria-label="Buscar usuario" placeholder="Buscar usuario..." [(ngModel)]="query" /></label></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>USUARIO</th><th>ROL</th><th>ESTADO</th><th></th></tr></thead>
+              <tbody>
+                @for (user of filteredUsers; track user.id) {
+                  <tr><td><span class="primary-cell">{{ user.username }}</span></td><td>{{ user.role === 'ADMINISTRADOR' ? 'Administrador' : 'Usuario' }}</td><td>{{ user.active ? 'Activo' : 'Inactivo' }}</td><td><div class="row-actions"><button class="row-more" aria-label="Editar usuario" (click)="openEditUser(user)">✎</button><button class="row-more danger-action" aria-label="Eliminar usuario" (click)="deleteUser(user)">×</button></div></td></tr>
+                } @empty {
+                  <tr><td class="empty-state" colspan="4">No hay usuarios que coincidan con tu búsqueda.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
+      @if (activeSection === sections.REPORTS) {
+        <section class="page-heading">
+          <div><span class="eyebrow">INFORMACIÓN FINANCIERA</span><h1>Reportes</h1><p>Consulta estados financieros para tomar decisiones con confianza.</p></div>
+          <button class="button button-secondary" [disabled]="hasInvalidDateRange || hasUnclassifiedTypes" (click)="printReport()">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" /><path d="M18 12h.01" /></svg>
+            Imprimir reporte
+          </button>
+        </section>
+        <section class="panel report-panel">
+          <div class="report-toolbar">
+            <div class="tab-row report-tabs" role="tablist" aria-label="Tipo de reporte">
+              <button role="tab" [attr.aria-selected]="reportView === reportViews.BALANCE" [class.tab-active]="reportView === reportViews.BALANCE" (click)="reportView = reportViews.BALANCE">Balance general</button>
+              <button role="tab" [attr.aria-selected]="reportView === reportViews.INCOME" [class.tab-active]="reportView === reportViews.INCOME" (click)="reportView = reportViews.INCOME">Estado de resultados</button>
+            </div>
+            <div class="date-range">
+              <label><span>Desde</span><input type="date" [(ngModel)]="dateFrom" aria-label="Fecha inicial del reporte" /></label>
+              <span class="range-divider">—</span>
+              <label><span>Hasta</span><input type="date" [(ngModel)]="dateTo" aria-label="Fecha final del reporte" /></label>
+            </div>
+            @if (hasInvalidDateRange) { <p class="form-error" role="alert">La fecha inicial no puede ser posterior a la fecha final.</p> }
+          </div>
+          <div class="report-sheet">
+            <div class="report-title">
+              <span class="report-logo">n</span>
+              <div><span class="eyebrow">GRUPO VALLE</span><h2>{{ reportView === reportViews.BALANCE ? 'Balance general' : 'Estado de resultados' }}</h2><p>Período: {{ reportPeriod }}</p></div>
+              <span class="report-currency">USD · Dólares</span>
+            </div>
+            @if (hasUnclassifiedTypes) {
+              <p class="form-error" role="alert">Completa la naturaleza y clasificación de todos los tipos de cuenta antes de generar reportes.</p>
+            } @else if (reportView === reportViews.BALANCE) {
+              <div class="financial-columns">
+                <div class="financial-group">
+                  <h3>Activos</h3>
+                  @for (account of accounts; track account.id) {
+                    @if (account.classification === accountTypeIds.ASSETS) {
+                      <div class="financial-line"><span>{{ account.code }} · {{ account.name }}</span><strong>{{ formatCurrency(reportBalance(account)) }}</strong></div>
+                    }
+
+                  }
+                  <div class="financial-total"><span>Total activos</span><strong>{{ formatCurrency(assetsTotal) }}</strong></div>
+                </div>
+                <div class="financial-group">
+                  <h3>Pasivos y patrimonio</h3>
+                  @for (account of accounts; track account.id) {
+                    @if (account.classification === accountTypeIds.LIABILITIES || account.classification === accountTypeIds.EQUITY) {
+                      <div class="financial-line"><span>{{ account.code }} · {{ account.name }}</span><strong>{{ formatCurrency(reportBalance(account)) }}</strong></div>
+                    }
+                  }
+                  <div class="financial-line"><span>Utilidad acumulada hasta {{ formatDate(dateTo) }}</span><strong>{{ formatCurrency(accumulatedProfitAtEnd) }}</strong></div>
+                  <div class="financial-total"><span>Total pasivos y patrimonio</span><strong>{{ formatCurrency(liabilitiesTotal + equityTotal + accumulatedProfitAtEnd) }}</strong></div>
+                  <div class="balance-status report-balance-status" [class.status-warning]="!isBalanceSheetBalanced">
+                    <span class="status-check">{{ isBalanceSheetBalanced ? '✓' : '!' }}</span>
+                    <span><strong>{{ isBalanceSheetBalanced ? 'Balance cuadrado' : balanceDifferenceLabel }}</strong><small>Activos = pasivos + patrimonio</small></span>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="financial-group income-statement">
+                <h3>Ingresos</h3>
+                @for (account of accounts; track account.id) {
+                  @if (account.classification === accountTypeIds.INCOME) {
+                    <div class="financial-line"><span>{{ account.code }} · {{ account.name }}</span><strong>{{ formatCurrency(reportBalance(account)) }}</strong></div>
+                  }
+                }
+                <div class="financial-total"><span>Total ingresos</span><strong>{{ formatCurrency(incomeTotal) }}</strong></div>
+                <h3 class="expense-heading">Gastos</h3>
+                @for (account of accounts; track account.id) {
+                  @if (account.classification === accountTypeIds.EXPENSES) {
+                    <div class="financial-line"><span>{{ account.code }} · {{ account.name }}</span><strong>{{ formatCurrency(reportBalance(account)) }}</strong></div>
+                  }
+                }
+                <div class="financial-total"><span>Total gastos</span><strong>{{ formatCurrency(expensesTotal) }}</strong></div>
+                <div class="profit-total"><span>Utilidad del período</span><strong>{{ formatCurrency(netIncome) }}</strong></div>
+              </div>
+            }
+            <p class="report-footnote">Los saldos se calculan con los movimientos disponibles; las tablas actuales no incluyen saldos iniciales de apertura.</p>
+          </div>
+        </section>
+      }
+      <footer class="page-footer"><span>© 2026 Nómina Contable</span><span>Todos los valores se muestran en USD</span></footer>
+    </main>
+  </div>
+</div>
+
+@if (modal) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <section class="modal-card" role="dialog" aria-modal="true" [attr.aria-labelledby]="modal + '-title'" (click)="$event.stopPropagation()">
+      @if (modal === 'voucher' && voucherDraft) {
+        <div class="modal-heading">
+          <div><span class="eyebrow">REGISTRO CONTABLE</span><h2 id="voucher-title">{{ voucherDraft.id ? 'Editar comprobante' : 'Nuevo comprobante' }}</h2><p>Registra cada movimiento y verifica que el asiento cuadre.</p><span class="modal-voucher-number">N.º {{ draftVoucherNumber }}</span></div>
+          <button class="modal-close" aria-label="Cerrar" (click)="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <label class="field"><span>Fecha</span><input type="date" [(ngModel)]="voucherDraft.date" /></label>
+            <label class="field field-wide"><span>Observaciones</span><input type="text" maxlength="120" placeholder="Ej. Pago de servicios básicos" [(ngModel)]="voucherDraft.observations" /></label>
+          </div>
+          <div class="detail-heading"><div><h3>Detalle del comprobante</h3><span>Agrega al menos dos movimientos.</span></div><span class="detail-count">{{ voucherDraft.details.length }} líneas</span></div>
+          <div class="voucher-detail-table">
+            <div class="detail-table-head"><span>CUENTA</span><span>DEBE</span><span>HABER</span><span></span></div>
+            @for (line of voucherDraft.details; track line.id) {
+              <div class="detail-table-row">
+                <select aria-label="Cuenta contable" [(ngModel)]="line.accountCode">
+                  <option value="">Selecciona una cuenta</option>
+                  @for (account of accounts; track account.id) {
+                    <option [value]="account.code">{{ account.code }} · {{ account.name }}</option>
+                  }
+                </select>
+                <label class="amount-input"><span>$</span><input type="number" min="0" step="0.01" aria-label="Debe" [(ngModel)]="line.debit" /></label>
+                <label class="amount-input"><span>$</span><input type="number" min="0" step="0.01" aria-label="Haber" [(ngModel)]="line.credit" /></label>
+                <button class="remove-line" aria-label="Eliminar línea" [disabled]="voucherDraft.details.length <= 2" (click)="removeVoucherLine(line.id)">×</button>
+              </div>
+            }
+          </div>
+          <button class="add-line-button" (click)="addVoucherLine()"><span>+</span> Agregar movimiento</button>
+          <div class="voucher-totals">
+            <div><span>Total Debe</span><strong>{{ formatCurrency(totalDebit) }}</strong></div>
+            <div><span>Total Haber</span><strong>{{ formatCurrency(totalCredit) }}</strong></div>
+            <div class="difference-total" [class.difference-balanced]="isVoucherBalanced"><span>Diferencia</span><strong>{{ formatCurrency(totalDebit - totalCredit) }}</strong></div>
+          </div>
+          @if (formError) { <p class="form-error" role="alert">{{ formError }}</p> }
+        </div>
+        <div class="modal-footer"><button class="button button-secondary" (click)="closeModal()">Cancelar</button><button class="button button-primary" [disabled]="!isVoucherBalanced" (click)="saveVoucher()">Guardar comprobante <span>→</span></button></div>
+      }
+
+      @if (modal === 'account' && accountDraft) {
+        <div class="modal-heading">
+          <div><span class="eyebrow">PLAN DE CUENTAS</span><h2 id="account-title">{{ accountDraft.id ? 'Editar cuenta' : 'Nueva cuenta' }}</h2><p>Define el código y tipo que identifican esta cuenta.</p></div>
+          <button class="modal-close" aria-label="Cerrar" (click)="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <label class="field"><span>Tipo de cuenta</span><select [(ngModel)]="accountDraft.typeId">@for (type of accountTypes; track type.id) {<option [ngValue]="type.id">{{ type.name }}</option>}</select></label>
+            <label class="field field-wide"><span>Nombre de la cuenta</span><input type="text" maxlength="100" placeholder="Ej. Caja chica" [(ngModel)]="accountDraft.name" /></label>
+          </div>
+          <p class="report-footnote">La clave y el código contable se asignan automáticamente.</p>
+          @if (formError) { <p class="form-error" role="alert">{{ formError }}</p> }
+        </div>
+        <div class="modal-footer"><button class="button button-secondary" (click)="closeModal()">Cancelar</button><button class="button button-primary" (click)="saveAccount()">Guardar cuenta <span>→</span></button></div>
+      }
+
+      @if (modal === 'accountType' && accountTypeDraft) {
+        <div class="modal-heading">
+          <div><span class="eyebrow">ESTRUCTURA CONTABLE</span><h2 id="accountType-title">{{ accountTypeDraft.id ? 'Editar tipo de cuenta' : 'Nuevo tipo de cuenta' }}</h2><p>Clasifica las cuentas y define su naturaleza contable.</p></div>
+          <button class="modal-close" aria-label="Cerrar" (click)="closeModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid">
+            <label class="field"><span>Naturaleza</span><select [(ngModel)]="accountTypeDraft.nature"><option [ngValue]="null" disabled>Selecciona una naturaleza</option><option [ngValue]="accountNatures.DEBIT">Deudora</option><option [ngValue]="accountNatures.CREDIT">Acreedora</option></select></label>
+            <label class="field"><span>Clasificación</span><select [(ngModel)]="accountTypeDraft.classification"><option [ngValue]="null" disabled>Selecciona una clasificación</option>@for (item of accountClassifications; track item.id) {<option [ngValue]="item.id">{{ item.label }}</option>}</select></label>
+            <label class="field field-wide"><span>Nombre del tipo</span><input type="text" maxlength="50" placeholder="Ej. Costos" [(ngModel)]="accountTypeDraft.name" /></label>
+          </div>
+          @if (formError) { <p class="form-error" role="alert">{{ formError }}</p> }
+        </div>
+        <div class="modal-footer"><button class="button button-secondary" (click)="closeModal()">Cancelar</button><button class="button button-primary" (click)="saveAccountType()">Guardar tipo <span>→</span></button></div>
+      }
+    </section>
+  </div>
+}
+
+@if (notice) {
+  <div class="toast" [class.toast-error]="noticeKind === 'error'" role="status">
+    <span>{{ noticeKind === 'error' ? '!' : '✓' }}</span>{{ notice }}
+    <button aria-label="Cerrar mensaje" (click)="notice = ''">×</button>
+  </div>
+}
+}

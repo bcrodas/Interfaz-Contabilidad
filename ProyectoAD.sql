@@ -1,0 +1,5 @@
+CREATE USER contabilidad IDENTIFIED BY conta123;
+
+GRANT CONNECT, RESOURCE TO contabilidad;
+
+ALTER USER contabilidad QUOTA UNLIMITED ON USERS;
